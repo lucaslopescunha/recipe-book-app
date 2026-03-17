@@ -1,0 +1,12 @@
+a:hover,
+a:active,
+.active {
+    background-color: #3a3a3b;
+    color: #150722;
+    cursor: pointer;
+}
+
+.dropdown-menu-end {
+    right: 0;
+    left: auto;
+}

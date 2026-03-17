@@ -1,0 +1,11 @@
+.button-group {
+    margin-top: 10px;
+
+}
+
+.button-group button:not(:last-child) {
+    margin-right: 10px;
+    /* Adjust this value as needed */
+    /* Or if you prefer Bootstrap's spacing utilities: */
+    /* margin-right: var(--bs-btn-margin-x); or similar utility classes like me-2 */
+}
