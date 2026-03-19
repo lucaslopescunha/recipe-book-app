@@ -12,7 +12,7 @@ export const routes: Routes = [
     {
         path: 'recipes',
         component: RecipesComponent,
-        children: recipeRoutes        
+        children: recipeRoutes     
     },
     {
         path: 'shopping-list', 

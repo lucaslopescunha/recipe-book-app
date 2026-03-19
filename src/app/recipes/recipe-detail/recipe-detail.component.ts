@@ -17,14 +17,16 @@ export class RecipeDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private destroyRef = inject(DestroyRef);
-
+  
   ngOnInit() {
     this.route.params
       .subscribe(
         (params: Params) => {
+          
           this.id = +params['id'];
           console.log("this is id: ", params['id']);
           let _recipe = this.recipeService.getRecipe(this.id);
+          console.log("that's the recipe", _recipe);
           if (_recipe)
             this.recipe.set(_recipe);
         }

@@ -1,6 +1,7 @@
 import { DestroyRef, inject, Injectable, signal } from '@angular/core';
 
 import { HttpClient } from '@angular/common/http';
+import { tap } from 'rxjs';
 import { Ingredient } from '../shared/ingredient.model';
 import { ShoppingListService } from '../shopping-list/shopping-list.service';
 import { Recipe } from './recipe.model';
@@ -19,8 +20,13 @@ export class RecipeService {
   private http = inject(HttpClient);
 
   loadedRecipes() {
-    const subscription = this.http.get<Recipe[]>("http://localhost:8080/recipes")
-      .subscribe({
+    return this.http.get<Recipe[]>("http://localhost:8080/recipes")
+      .pipe(tap(
+        recipes => {
+          this.recipes.set(recipes);
+        }
+      ));
+/*      .subscribe({
         next: (response) => {
           console.log("response ", response);
           this.recipes.set(response)
@@ -29,7 +35,7 @@ export class RecipeService {
     this.destroyRef.onDestroy(() => {
       subscription.unsubscribe();
     });
-  }
+  */}
 
   saveRecipes(recipe: Recipe) {
     
