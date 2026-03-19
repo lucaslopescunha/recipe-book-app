@@ -1,4 +1,5 @@
-import { Injectable, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { DestroyRef, inject, Injectable, signal } from '@angular/core';
 import { Subject } from 'rxjs';
 import { Ingredient } from '../shared/ingredient.model';
 
@@ -16,14 +17,30 @@ export class ShoppingListService {
   private _editing = signal<number | null>(null);
   readonly editing = this._editing.asReadonly();
 
+  private destroyRef = inject(DestroyRef);
 
   private ingredients = signal<Ingredient[]>([
-    new Ingredient('Apples', 5),
-    new Ingredient('Tomatoes', 10),
+    //    new Ingredient('Apples', 5),
+    //    new Ingredient('Tomatoes', 10),
   ]);
   listIngredients = this.ingredients.asReadonly();
 
+  private http = inject(HttpClient);
 
+  listIngredientsShoppingList() {
+
+    return this.http.get<Ingredient[]>('http://localhost:8080/recipes/ingredients');
+
+  }
+
+  loadListIngredients() {
+    const subscribe = this.listIngredientsShoppingList().subscribe({
+      next: (value) => {
+        this.ingredients.set(value);
+      }
+    });
+    this.destroyRef.onDestroy(() => subscribe.unsubscribe());
+  }
   // editing control
   startEditing(index: number) {
     this._editing.set(index);
@@ -40,26 +57,54 @@ export class ShoppingListService {
 
   addIngredient(ingredient: Ingredient) {
     this.ingredients.update((prevIngredient) => [ingredient, ...prevIngredient]);
+    const subscribe = this.http.post<{ name: string }>('http://localhost:8080/recipes/ingredients', ingredient)
+      .subscribe({
+        next: (value) => {
+          console.log(value);
+        }
+      });
+    this.destroyRef.onDestroy(() => subscribe.unsubscribe());
     console.log(this.ingredients());
   }
 
-  addIngredients(ingredients: Ingredient[]) {
-    // for (let ingredient of ingredients) {
-    //   this.addIngredient(ingredient);
-    // }
-    this.ingredients.update((prevIngredient) => {
-      const merged = [...prevIngredient];
-      for (const ing of ingredients) {
-        const idx = merged.findIndex(x => x.name === ing.name);
-        if (idx >= 0) {
-          merged[idx] = new Ingredient(merged[idx].name, merged[idx].amount + ing.amount);
-        } else {
-          merged.push(new Ingredient(ing.name, ing.amount));
-        }
-      }
-      return merged;
-    });
+  addIngredients(ingredientsParam: Ingredient[]) {
+    const subscribe = this.listIngredientsShoppingList().subscribe({
+      next: (ingredients) => {
 
+        this.ingredients.set(ingredients);
+        this.ingredients.update((prevIngredient) => {
+          const merged = [...prevIngredient];
+          for (const ing of ingredientsParam) {
+            console.log("merged ", merged);
+            const idx = merged.findIndex(x => x.name === ing.name);
+            console.log("idx ", idx);
+            let ingredient: Ingredient;
+            if (idx >= 0) {
+              ingredient = new Ingredient(merged[idx].id, merged[idx].name, merged[idx].amount + ing.amount);
+              merged[idx] = ingredient;
+              this.putIngredient(ingredient);
+            } else {
+              ingredient = new Ingredient(null, ing.name, ing.amount);
+              merged.push(ingredient);
+              this.addIngredient(ingredient);
+            }
+          }
+          return merged;
+        });
+
+      },
+    });
+    this.destroyRef.onDestroy(() => subscribe.unsubscribe());
+  }
+
+  putIngredient(ingredient: Ingredient) {
+    const subscribe = this.http.put<{ name: string }>('http://localhost:8080/recipes/ingredients/' + ingredient.id, ingredient)
+      .subscribe({
+        next: (value) => {
+          console.log(value);
+        }
+      });
+    this.destroyRef.onDestroy(() => subscribe.unsubscribe());      
   }
 
   updateIngredient(index: number, newIngredient: Ingredient) {

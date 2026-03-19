@@ -1,5 +1,6 @@
-import { inject, Injectable, signal } from '@angular/core';
+import { DestroyRef, inject, Injectable, signal } from '@angular/core';
 
+import { HttpClient } from '@angular/common/http';
 import { Ingredient } from '../shared/ingredient.model';
 import { ShoppingListService } from '../shopping-list/shopping-list.service';
 import { Recipe } from './recipe.model';
@@ -9,28 +10,44 @@ import { Recipe } from './recipe.model';
 })
 export class RecipeService {
 
-  private recipes = signal<Recipe[]>([
-    new Recipe(
-      'Tasty Schnitzel',
-      'A super-tasty Schnitzel - just awesome!',
-      'https://upload.wikimedia.org/wikipedia/commons/7/72/Schnitzel.JPG',
-      [
-        new Ingredient('Meat', 1),
-        new Ingredient('French Fries', 20)
-      ]),
-    new Recipe('Big Fat Burger',
-      'What else you need to say?',
-      'https://upload.wikimedia.org/wikipedia/commons/b/be/Burger_King_Angus_Bacon_%26_Cheese_Steak_Burger.jpg',
-      [
-        new Ingredient('Buns', 2),
-        new Ingredient('Meat', 1)
-      ])
-  ]);
+  private recipes = signal<Recipe[]>([]);
   recipesChanged = this.recipes.asReadonly();
+  private destroyRef = inject(DestroyRef);
 
   private slService = inject(ShoppingListService);
 
+  private http = inject(HttpClient);
 
+  loadedRecipes() {
+    const subscription = this.http.get<Recipe[]>("http://localhost:8080/recipes")
+      .subscribe({
+        next: (response) => {
+          console.log("response ", response);
+          this.recipes.set(response)
+        }
+      });
+    this.destroyRef.onDestroy(() => {
+      subscription.unsubscribe();
+    });
+  }
+
+  saveRecipes(recipe: Recipe) {
+    
+    const subscription = this.http.post<{ name: string }>("http://localhost:8080/recipes", recipe)
+      .subscribe({
+        next: (response) => console.log(response)
+      });
+    this.destroyRef.onDestroy(() => subscription.unsubscribe());
+  }
+
+  updateRecipes(recipe: Recipe) {
+    
+    const subscription = this.http.put<{ name: string }>("http://localhost:8080/recipes/" + recipe.id, recipe)
+      .subscribe({
+        next: (response) => console.log(response)
+      });
+    this.destroyRef.onDestroy(() => subscription.unsubscribe());
+  }
 
   getRecipe(index: number) {
     const item = this.recipes().at(index);
@@ -42,26 +59,40 @@ export class RecipeService {
   }
 
   addRecipe(recipe: Recipe) {
+    console.log("New ", recipe);
     this.recipes.update((prevRecipes) => [...prevRecipes, recipe]);
+    this.saveRecipes(recipe);
   }
 
   updateRecipe(index: number, newRecipe: Recipe) {
+    console.log("Updated ", newRecipe);
     this.recipes.update((currentRecipes) => {
       if (index < 0 && index >= currentRecipes.length) {
         return currentRecipes;
       }
       const updatedRecipes = [...currentRecipes];
       updatedRecipes[index] = newRecipe;
+      this.updateRecipes(newRecipe);
       return updatedRecipes;
     })
   }
 
-  deleteRecipe(index: number) {
+  deleteRecipe(index: number, id: number) {
+    console.log("delete recipe", id)
     this.recipes.update((currentRecipes) => {
-      if(index < 0 && index >= currentRecipes.length) {
+      if (index < 0 && index >= currentRecipes.length) {
         return currentRecipes;
       }
       return currentRecipes.filter((_, _index) => _index !== index);
     });
+    console.log("Delete Recipe");
+    return this.http.delete<{ name: string }>("http://localhost:8080/recipes/" + id);
+
+  }
+
+  deleteIngredient(id: number) {
+    console.log("Delete Ingredient");
+    return this.http.delete<{ name: string }>("http://localhost:8080/recipes/ingredient/" + id);
+
   }
 }

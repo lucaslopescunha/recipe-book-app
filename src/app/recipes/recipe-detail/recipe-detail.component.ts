@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { DropdownDirective } from "../../shared/dropdown.directive";
 import { Recipe } from '../recipe.model';
@@ -16,12 +16,14 @@ export class RecipeDetailComponent implements OnInit {
   private recipeService = inject(RecipeService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private destroyRef = inject(DestroyRef);
 
   ngOnInit() {
     this.route.params
       .subscribe(
         (params: Params) => {
           this.id = +params['id'];
+          console.log("this is id: ", params['id']);
           let _recipe = this.recipeService.getRecipe(this.id);
           if (_recipe)
             this.recipe.set(_recipe);
@@ -41,9 +43,17 @@ export class RecipeDetailComponent implements OnInit {
   }
 
   onDeleteRecipe() {
-    this.recipeService.deleteRecipe(this.id);
+    const subscription = this.recipeService.deleteRecipe(this.id, this.recipe().id)
+      .subscribe({
+        next: (response) => console.log(response)
+      });
+    this.destroyRef.onDestroy(() => {
+      subscription.unsubscribe();
+    });
+
     this.router.navigate(['/recipes']);
   }
+
 
 }
 

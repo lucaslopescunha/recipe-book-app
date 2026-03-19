@@ -10,7 +10,8 @@ import { Recipe } from '../../recipe.model';
 })
 export class RecipeItemComponent implements OnInit{
   recipe = input<Recipe>();
-  index = input<number>();
+  index = input<number>(0);
+  even = input<boolean>(false);
 
   ngOnInit(): void {
     

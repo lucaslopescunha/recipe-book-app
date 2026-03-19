@@ -55,7 +55,8 @@
       </div>
       <div class="row">
         <div class="col-12" formArrayName="ingredients">
-        @for( ingredientCtrl of recipeControls; track $index; let i = $index) {
+          
+        @for( ingredientCtrl of recipeControls; track ingredientCtrl.value; let i = $index) {
           <div
             class="row g-2 align-items-center"
             [formGroupName]="i"
@@ -76,7 +77,7 @@
               <button
                 type="button"
                 class="btn btn-danger"
-                (click)="onDeleteIngredient(i)">X</button>
+                (click)="onDeleteIngredient(i, ingredientCtrl.value.id)">X</button>
             </div>
           </div>
 

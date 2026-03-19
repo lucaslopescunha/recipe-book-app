@@ -15,3 +15,14 @@
     margin-top: 0;
     border-top-width: 1px;
 }
+.bg-highlight { background-color: #0ffae6; } /* or your color */
+.list-group-item.active { background-color: #4ff0ff; }
+
+.list-group-item.even { background-color: #0a99ec; }
+.list-group-item.odd  { background-color: #f9fdfdc7; }
+
+/* optional: style active route */
+.list-group-item.active { background-color: #dfefff; }
+.list-group-item:hover {
+    background-color: #2c0530c7;
+}

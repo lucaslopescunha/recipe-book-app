@@ -1,5 +1,8 @@
 <a
-  style="cursor: pointer;"
+  style="cursor: pointer;" 
+     
+  [class.even]="index() % 2 === 0"
+  [class.odd]="index() % 2 === 1"
   [routerLink]="[index()]"
   routerLinkActive="active"
   class="list-group-item clearfix">

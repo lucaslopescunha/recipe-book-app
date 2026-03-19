@@ -1,6 +1,7 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { FormArray, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Params, Router } from '@angular/router';
+import { DataStorageService } from '../../shared/data-storage.service';
 import { RecipeService } from '../recipe.service';
 
 @Component({
@@ -14,6 +15,7 @@ export class RecipeEditComponent implements OnInit {
   editMode = false;
   recipeForm!: FormGroup;
   private recipeService = inject(RecipeService);
+  private dataStorage = inject(DataStorageService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
@@ -26,12 +28,14 @@ export class RecipeEditComponent implements OnInit {
     this.route.params
       .subscribe(
         (params: Params) => {
+          console.log("imprime o id ", params['id']);
           this.id = +params['id'];
           this.editMode = params['id'] != null;
           this.initForm();
         }
       );
   }
+  recipes = () => this.recipeService.recipesChanged();
 
   onSubmit() {
     if (this.editMode) {
@@ -46,6 +50,7 @@ export class RecipeEditComponent implements OnInit {
   onAddIngredient() {
     (<FormArray>this.recipeForm.get('ingredients')).push(
       new FormGroup({
+        'id': new FormControl(null),
         'name': new FormControl(null, Validators.required),
         'amount': new FormControl(null, [
           Validators.required,
@@ -55,8 +60,18 @@ export class RecipeEditComponent implements OnInit {
     );
   }
 
-  onDeleteIngredient(index: number) {
+  onDeleteIngredient(index: number, id: number) {
+    console.log('TEM ID', id);
     (<FormArray>this.recipeForm.get('ingredients')).removeAt(index);
+    if(id !==null) {
+      const subscription = this.recipeService.deleteIngredient(id).subscribe({
+        next(value) {
+          console.log("RESPONSE IS ", value);
+        },
+      }
+
+      )
+    }
   }
 
   onCancel() {
@@ -64,11 +79,13 @@ export class RecipeEditComponent implements OnInit {
   }
 
   private initForm() {
+    let id = null;
     let recipeName = '';
     let recipeImagePath = '';
     let recipeDescription = '';
     let recipeIngredients = new FormArray<
       FormGroup<{
+        id: FormControl<number | null>;
         name: FormControl<string | null>;
         amount: FormControl<number | null>;
       }>
@@ -77,6 +94,7 @@ export class RecipeEditComponent implements OnInit {
     if (this.editMode) {
       const recipe = this.recipeService.getRecipe(this.id);
       if (recipe) {
+        id = recipe.id;
         recipeName = recipe.name;
         recipeImagePath = recipe.imagePath;
         recipeDescription = recipe.description;
@@ -84,6 +102,7 @@ export class RecipeEditComponent implements OnInit {
           for (let ingredient of recipe.ingredients) {
             recipeIngredients.push(
               new FormGroup({
+                'id': new FormControl(ingredient.id),
                 'name': new FormControl(ingredient.name, Validators.required),
                 'amount': new FormControl(ingredient.amount, [
                   Validators.required,
@@ -98,6 +117,7 @@ export class RecipeEditComponent implements OnInit {
     }
 
     this.recipeForm = new FormGroup({
+      'id': new FormControl(id),
       'name': new FormControl(recipeName, Validators.required),
       'imagePath': new FormControl(recipeImagePath, Validators.required),
       'description': new FormControl(recipeDescription, Validators.required),

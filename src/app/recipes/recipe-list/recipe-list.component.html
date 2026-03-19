@@ -6,9 +6,10 @@
 <hr>
 <div class="row">
   <div class="col-xs-12">
-    @for(recipe of recipes(); track recipe.name; let i = $index) {
-        <app-recipe-item
-            [recipe]="recipe"
+    @for(recipe of recipes(); track recipe.id; let i = $index, e = $even) {
+        <app-recipe-item 
+            [recipe]="recipe" 
+            [even]="e"
             [index]="i"></app-recipe-item>
     }
   </div>
